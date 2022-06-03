@@ -19,7 +19,7 @@ pipeline {
             steps {
                 rtMavenDeployer (
                     id: 'openmrs-deployer',
-                    serverId: 'JFROG_INSTANCE',
+                    serverId: 'JFROG_DEPLOY',
                     releaseRepo: 'learn-libs-release-local',
                     snapshotRepo: 'learn-libs-snapshot-local',
                     
