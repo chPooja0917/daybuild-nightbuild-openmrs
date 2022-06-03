@@ -1,37 +1,50 @@
 pipeline {
-    agent { label 'build_java_11'}
-    options {
-        timeout(time:1, unit: 'HOURS')
+    agent { label 'build_java_11'
     }
-    triggers {
-        pollSCM('* * * * *')
+    options {
+        timeout(time: 1, unit: 'HOURS')
+    }
+    triggers{
+        cron('0 23 * * *')
     }
     stages {
         stage('Source Code') {
             steps {
-            git branch: 'daybuild' ,  url: 'https://github.com/chPooja0917/openmrs-daybuildnightbuild.git'
-            }       
-
-        }
-        stage('build code and sonarqube analysis') {
-            steps {
-                withSonarQubeEnv('SONAR_LATEST') {
-                mvn clean package sonar:sonar
-                }
+                git url: 'https://github.com/chPooja0917/openmrs-daybuildnightbuild.git',
+                branch: 'nightbuild'
             }
+            
+        }
+        stage('Artifactory-Configuration') {
+            steps {
+                rtMavenDeployer (
+                    id: 'openmrs-deployer',
+                    serverId: 'JFROG_INSTANCE',
+                    releaseRepo: 'learn-libs-release-local',
+                    snapshotRepo: 'learn-libs-snapshot-local',
+                    
+                )
+            }
+        }
+        stage('Build the Code and sonarqube-analysis') {
+            steps {
+                rtMavenRun (
+                    // Tool name from Jenkins configuration.
+                    tool: 'MVN_HOME',
+                    pom: 'pom.xml',
+                    goals: 'clean install',
+                    // Maven options.
+                    deployerId: 'openmrs-deployer',
+                )
+
+        
+            }
+        
         }
         stage('reporting') {
             steps {
-                junit testResults: 'target/surefire-reports/*.xml'
+                 junit testResults: 'target/surefire-reports/*.xml'
             }
         }
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'HOURS'){
-                waitForQualityGate abortPipeline: true
-                }                
-            }
-        }
-    }
-
+    }    
 }
