@@ -1,0 +1,37 @@
+pipeline {
+    agent { label 'build_java_11'}
+    options {
+        timeout(time:1, unit: 'HOURS')
+    }
+    triggers {
+        pollSCM('* * * * *')
+    }
+    stages {
+        stage('Source Code') {
+            steps {
+            git branch: 'daybuild' ,  url: 'https://github.com/chPooja0917/openmrs-daybuildnightbuild.git'
+            }       
+
+        }
+        stage('build code and sonarqube analysis') {
+            steps {
+                withSonarQubeEnv('SONAR_LATEST') {
+                mvn clean package sonar:sonar
+                }
+            }
+        }
+        stage('reporting') {
+            steps {
+                junit testResults: 'target/surefire-reports/*.xml'
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS'){
+                waitForQualityGate abortPipeline: true
+                }                
+            }
+        }
+    }
+
+}
