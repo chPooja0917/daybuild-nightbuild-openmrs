@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Source Code') {
             steps {
-            git branch: 'daybuild' ,  url: 'https://github.com/chPooja0917/openmrs-daybuildnightbuild.git'
+            git branch: 'daybuild' ,  url: 'https://github.com/chPooja0917/daybuild-nightbuild-openmrs.git'
             }       
 
         }
